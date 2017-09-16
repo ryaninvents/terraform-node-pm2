@@ -1,0 +1,6 @@
+{
+    "apps": [{
+        "name": "terraform-node-pm2",
+        "script": "/apps/terraform-node-pm2/index.js"
+    }]
+}

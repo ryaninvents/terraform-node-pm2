@@ -80,6 +80,9 @@ resource "aws_instance" "web" {
     vpc_security_group_ids = ["${aws_security_group.default.id}"]
 }
 
+# Split `null_resource.dependencies` and `null_resource.application` apart so that
+# re-running the Terraform config won't make you wait for `yum update` to finish when
+# all you want is to re-upload your app.
 resource "null_resource" "dependencies" {
     provisioner "remote-exec" {
         script = "${path.module}/provision/install-deps.sh"
@@ -103,9 +106,16 @@ resource "null_resource" "application" {
         user = "centos"
         private_key = "${file("~/.ssh/${var.ssh-key}.pem")}"
     }
+    provisioner "remote-exec" {
+        inline = ["mkdir -p /apps/terraform-node-pm2"]
+    }
     provisioner "file" {
         source = "${path.module}/../../index.js"
-        destination = "/app/index.js"
+        destination = "/apps/terraform-node-pm2/index.js"
+    }
+    provisioner "file" {
+        source = "${path.module}/provision/ecosystem.config.json"
+        destination = "/apps/ecosystem.config.json"
     }
     provisioner "remote-exec" {
         script = "${path.module}/provision/npm-install.sh"
